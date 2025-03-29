@@ -1,1 +1,121 @@
 Endo Tracker
+
+
+import streamlit as st
+import pandas as pd
+import os
+from datetime import datetime
+import matplotlib.pyplot as plt
+
+
+DATA_FILE = "health_data.csv"
+
+
+def load_data():
+   if os.path.exists(DATA_FILE):
+       return pd.read_csv(DATA_FILE, parse_dates=["Date"])
+   else:
+       return pd.DataFrame(columns=["Date", "Pain", "Anxiety", "Hair Loss", "Calories", "Weight", "Notes"])
+
+
+def save_entry(entry):
+   df = load_data()
+   df = pd.concat([df, pd.DataFrame([entry])], ignore_index=True)
+   df.to_csv(DATA_FILE, index=False)
+
+
+def main():
+   st.set_page_config("Endometriosis Daily Journal", layout="centered")
+
+
+   # Clean, light layout styles
+   st.markdown("""
+       <style>
+           .block-container {
+               padding-top: 2rem;
+               padding-bottom: 2rem;
+               max-width: 600px;
+               margin: auto;
+           }
+           h1 {
+               font-family: 'Segoe UI', sans-serif;
+               font-size: 2rem;
+               text-align: center;
+               margin-bottom: 1rem;
+           }
+           label, .stTextInput>div>div>input {
+               font-size: 1rem !important;
+           }
+           .stSlider {
+               margin-bottom: 1.5rem;
+           }
+           .stNumberInput, .stTextArea {
+               margin-bottom: 1.5rem;
+           }
+       </style>
+   """, unsafe_allow_html=True)
+
+
+   st.markdown("### 🌼 **Endometriosis Daily Journal**")
+
+
+   with st.form("entry_form"):
+       date = st.date_input("Select Date", datetime.today())
+       anxiety = st.slider("Anxiety Level", 0, 10, 0)
+       pain = st.slider("Pain Level", 0, 10, 0)
+       hair_loss = st.slider("Hair Loss Level", 0, 10, 0)
+       calories = st.slider("Caloric intake level", 0, 10000, 0)
+       weight = st.number_input("Weight (kg)", min_value=0.0, format="%.2f")
+       notes = st.text_area("Notes", placeholder="Write any observations...")
+
+
+       submitted = st.form_submit_button("💾 Save Entry")
+
+
+       if submitted:
+           entry = {
+               "Date": pd.to_datetime(date),
+               "Pain": pain,
+               "Anxiety": anxiety,
+               "Hair Loss": hair_loss,
+               "Calories": calories,
+               "Weight": weight,
+               "Notes": notes
+           }
+           save_entry(entry)
+           st.success("✅ Entry saved!")
+
+
+   st.markdown("---")
+   st.markdown("### 📊 Recent Logs and Trends")
+
+
+   data = load_data()
+   if not data.empty:
+       data = data.sort_values("Date")
+       data["Date"] = data["Date"].dt.date
+
+
+       metric = st.selectbox("Choose a metric to visualize", ["Pain", "Anxiety", "Hair Loss", "Calories", "Weight"])
+
+
+       fig, ax = plt.subplots(figsize=(8, 4))
+       ax.plot(data["Date"], data[metric], marker="o", linestyle="-", linewidth=2)
+       ax.set_title(f"{metric} Over Time")
+       ax.set_xlabel("Date")
+       ax.set_ylabel(metric)
+       ax.grid(True, alpha=0.3, linestyle="--")
+       ax.tick_params(axis="x", rotation=45)
+       fig.tight_layout()
+       st.pyplot(fig)
+
+
+       st.markdown("### 📄 Latest Entries")
+       st.dataframe(data.tail(10), use_container_width=True)
+   else:
+       st.info("No data available yet. Add your first entry above!")
+
+
+if __name__ == "__main__":
+   main()
+
