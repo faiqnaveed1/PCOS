@@ -24,8 +24,8 @@ def load_data():
             "Date", "Anxiety", "Hair Loss", "Pain before period starts", "Period Pain", "Headache pain",
             "Pain during or after intercourse", "Chest pain", "Shoulder pain", "Back and/or leg pain",
             "Pain and or blood during urination", "Pelvic pain", "Pain during ovulation",
-            "Presence of old or dark blood before period", "Bleeding in between periods",
-            "Pain and/or blood during periods", "Presence of blood in stool",
+            "Presence of old or dark blood before period", "Difficulty getting pregnant",
+            "Bleeding in between periods", "Pain and/or blood during periods", "Presence of blood in stool",
             "Calories", "Weight", "Notes", "Treatments Used", "Treatment Comments"
         ])
 
@@ -54,6 +54,7 @@ def main():
         ovulation_pain = st.slider("Pain during ovulation", 0, 10, 0)
 
         old_blood = st.checkbox("Presence of old or dark blood before period")
+        difficulty_pregnant = st.checkbox("Difficulty getting pregnant")
         between_bleeding = st.checkbox("Bleeding in between periods")
         blood_during_period = st.checkbox("Pain and/or blood during periods")
         blood_in_stool = st.checkbox("Presence of blood in stool")
@@ -98,6 +99,7 @@ def main():
                 "Pelvic pain": pelvic_pain,
                 "Pain during ovulation": ovulation_pain,
                 "Presence of old or dark blood before period": old_blood,
+                "Difficulty getting pregnant": difficulty_pregnant,
                 "Bleeding in between periods": between_bleeding,
                 "Pain and/or blood during periods": blood_during_period,
                 "Presence of blood in stool": blood_in_stool,
@@ -111,7 +113,7 @@ def main():
             st.success("✅ Entry saved!")
 
     st.markdown("---")
-    st.subheader("📊 Symptom Trends Over Time")
+    st.subheader("📊 Symptom Trend Viewer")
 
     data = load_data()
     if not data.empty:
@@ -120,16 +122,16 @@ def main():
 
         numeric_columns = data.select_dtypes(include='number').columns.tolist()
 
-        fig, ax = plt.subplots(figsize=(10, 5))
-        for column in numeric_columns:
-            ax.plot(data["Date"], data[column], marker="o", linestyle="-", linewidth=2, label=column)
+        selected_metric = st.selectbox("Select one metric to view over time", numeric_columns)
 
-        ax.set_title("Symptom Trends Over Time")
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.plot(data["Date"], data[selected_metric], marker="o", linestyle="-", linewidth=2, label=selected_metric)
+        ax.set_title(f"{selected_metric} Over Time")
         ax.set_xlabel("Date")
         ax.set_ylabel("Level")
         ax.grid(True, alpha=0.3, linestyle="--")
         ax.tick_params(axis="x", rotation=45)
-        ax.legend(loc="upper left", bbox_to_anchor=(1.05, 1))
+        ax.legend()
         fig.tight_layout()
         st.pyplot(fig)
 
